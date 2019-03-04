@@ -15,6 +15,7 @@
 
   var genericTemplatesPath = 'generic';
   var baseTemplatesPath = 'line-by-line';
+  var wrappedTemplatesPath = 'wrapped';
   var iconsBaseTemplatesPath = 'icon';
   var tagsBaseTemplatesPath = 'tag';
 
@@ -202,16 +203,18 @@
       prefix = lineWithPrefix.prefix;
       lineWithoutPrefix = lineWithPrefix.line;
     }
+    var lineFolding = this.config.lineFolding;
 
-    return hoganUtils.render(genericTemplatesPath, 'line',
-      {
-        type: type,
-        lineClass: 'd2h-code-linenumber',
-        contentClass: 'd2h-code-line',
-        prefix: prefix,
-        content: lineWithoutPrefix,
-        lineNumber: lineNumberTemplate
-      });
+    return hoganUtils.render((lineFolding) ? wrappedTemplatesPath : genericTemplatesPath, 'line',
+    {
+      type: type,
+      lineClass: (lineFolding) ? 'd2h-wrapped-code-linenumber' : 'd2h-code-linenumber',
+      contentClass: (lineFolding) ? 'd2h-wrapped-code-line' : 'd2h-code-line',
+      prefix: prefix,
+      content: lineWithoutPrefix,
+      lineNumber: lineNumberTemplate
+    });
+
   };
 
   LineByLinePrinter.prototype._generateEmptyDiff = function() {

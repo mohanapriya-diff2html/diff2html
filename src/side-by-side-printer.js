@@ -15,6 +15,7 @@
 
   var genericTemplatesPath = 'generic';
   var baseTemplatesPath = 'side-by-side';
+  var wrappedTemplatesPath = 'wrapped';
   var iconsBaseTemplatesPath = 'icon';
   var tagsBaseTemplatesPath = 'tag';
 
@@ -33,7 +34,8 @@
   }
 
   SideBySidePrinter.prototype.makeDiffHtml = function(file, diffs) {
-    var fileDiffTemplate = hoganUtils.template(baseTemplatesPath, 'file-diff');
+    var that = this;
+    var fileDiffTemplate = hoganUtils.template(baseTemplatesPath, (that.config.lineFolding) ? 'wrapped-file-diff' : 'file-diff');
     var filePathTemplate = hoganUtils.template(genericTemplatesPath, 'file-path');
     var fileIconTemplate = hoganUtils.template(iconsBaseTemplatesPath, 'file');
     var fileTagTemplate = hoganUtils.template(tagsBaseTemplatesPath, printerUtils.getFileTypeIcon(file));
@@ -77,15 +79,41 @@
     });
   };
 
+  SideBySidePrinter.prototype.makeWrappedSideHtml = function(left, right) {
+    return hoganUtils.render(wrappedTemplatesPath, 'column-line-number', {
+      left: {
+        diffParser: diffParser,
+        blockHeader: utils.escape(left.content),
+        lineClass: 'd2h-wrapped-code-side-linenumber',
+        contentClass: 'd2h-wrapped-code-side-line'
+      },
+      right: {
+        diffParser: diffParser,
+        blockHeader: utils.escape(right.content),
+        lineClass: 'd2h-wrapped-code-side-linenumber',
+        contentClass: 'd2h-wrapped-code-side-line'
+      }
+    });
+  };
+
   SideBySidePrinter.prototype.generateSideBySideFileHtml = function(file) {
     var that = this;
     var fileHtml = {};
-    fileHtml.left = '';
-    fileHtml.right = '';
+    var lineFolding = that.config.lineFolding;
+    if (lineFolding) {
+      fileHtml = '';
+    } else {
+      fileHtml.left = '';
+      fileHtml.right = '';
+    }
 
     file.blocks.forEach(function(block) {
-      fileHtml.left += that.makeSideHtml(block.header);
-      fileHtml.right += that.makeSideHtml('');
+      if (lineFolding) {
+        fileHtml += that.makeWrappedSideHtml({ content: block.header }, { content: "" });
+      } else {
+        fileHtml.left += that.makeSideHtml(block.header);
+        fileHtml.right += that.makeSideHtml('');
+      }
 
       var oldLines = [];
       var newLines = [];
@@ -125,12 +153,28 @@
 
             var diff = printerUtils.diffHighlight(oldLine.content, newLine.content, that.config);
 
-            fileHtml.left +=
-              that.generateSingleLineHtml(file.isCombined, deleteType, oldLine.oldNumber,
-                diff.first.line, diff.first.prefix);
-            fileHtml.right +=
-              that.generateSingleLineHtml(file.isCombined, insertType, newLine.newNumber,
-                diff.second.line, diff.second.prefix);
+            if (lineFolding) {
+              fileHtml += that.generateWrappedSingleLineHtml({
+                isCombined: file.isCombined,
+                type: deleteType,
+                number: oldLine.oldNumber,
+                content: diff.first.line,
+                possiblePrefix: diff.first.prefix
+              }, {
+                isCombined: file.isCombined,
+                type: insertType,
+                number: newLine.newNumber,
+                content: diff.second.line,
+                possiblePrefix: diff.second.prefix
+              });
+            } else {
+              fileHtml.left +=
+                that.generateSingleLineHtml(file.isCombined, deleteType, oldLine.oldNumber,
+                  diff.first.line, diff.first.prefix);
+              fileHtml.right +=
+                that.generateSingleLineHtml(file.isCombined, insertType, newLine.newNumber,
+                  diff.second.line, diff.second.prefix);
+            }
           }
 
           if (max > common) {
@@ -138,8 +182,12 @@
             var newSlice = newLines.slice(common);
 
             var tmpHtml = that.processLines(file.isCombined, oldSlice, newSlice);
-            fileHtml.left += tmpHtml.left;
-            fileHtml.right += tmpHtml.right;
+            if (lineFolding) {
+              fileHtml += tmpHtml;
+            } else {
+              fileHtml.left += tmpHtml.left;
+              fileHtml.right += tmpHtml.right;
+            }
           }
         });
 
@@ -158,11 +206,43 @@
         }
 
         if (line.type === diffParser.LINE_TYPE.CONTEXT) {
-          fileHtml.left += that.generateSingleLineHtml(file.isCombined, line.type, line.oldNumber, escapedLine, prefix);
-          fileHtml.right += that.generateSingleLineHtml(file.isCombined, line.type, line.newNumber, escapedLine, prefix);
+          if (lineFolding) {
+            fileHtml += that.generateWrappedSingleLineHtml({
+              isCombined: file.isCombined,
+              type: line.type,
+              number: line.oldNumber,
+              content: escapedLine,
+              possiblePrefix: prefix
+            }, {
+              isCombined: file.isCombined,
+              type: line.type,
+              number: line.newNumber,
+              content: escapedLine,
+              possiblePrefix: prefix
+            });
+          } else {
+            fileHtml.left += that.generateSingleLineHtml(file.isCombined, line.type, line.oldNumber, escapedLine, prefix);
+            fileHtml.right += that.generateSingleLineHtml(file.isCombined, line.type, line.newNumber, escapedLine, prefix);
+          }
         } else if (line.type === diffParser.LINE_TYPE.INSERTS && !oldLines.length) {
-          fileHtml.left += that.generateSingleLineHtml(file.isCombined, diffParser.LINE_TYPE.CONTEXT, '', '', '');
-          fileHtml.right += that.generateSingleLineHtml(file.isCombined, line.type, line.newNumber, escapedLine, prefix);
+          if (lineFolding) {
+            fileHtml += that.generateWrappedSingleLineHtml({
+              isCombined: file.isCombined,
+              type: diffParser.LINE_TYPE.CONTEXT,
+              number: '',
+              content: '',
+              possiblePrefix: ''
+            }, {
+              isCombined: file.isCombined,
+              type: line.type,
+              number: line.newNumber,
+              content: escapedLine,
+              possiblePrefix: prefix
+            });
+          } else {
+            fileHtml.left += that.generateSingleLineHtml(file.isCombined, diffParser.LINE_TYPE.CONTEXT, '', '', '');
+            fileHtml.right += that.generateSingleLineHtml(file.isCombined, line.type, line.newNumber, escapedLine, prefix);
+          }
         } else if (line.type === diffParser.LINE_TYPE.DELETES) {
           oldLines.push(line);
         } else if (line.type === diffParser.LINE_TYPE.INSERTS && Boolean(oldLines.length)) {
@@ -182,8 +262,13 @@
   SideBySidePrinter.prototype.processLines = function(isCombined, oldLines, newLines) {
     var that = this;
     var fileHtml = {};
-    fileHtml.left = '';
-    fileHtml.right = '';
+    var lineFolding = that.config.lineFolding;
+    if (lineFolding) {
+      fileHtml = '';
+    } else {
+      fileHtml.left = '';
+      fileHtml.right = '';
+    }
 
     var maxLinesNumber = Math.max(oldLines.length, newLines.length);
     for (var i = 0; i < maxLinesNumber; i++) {
@@ -205,14 +290,62 @@
       }
 
       if (oldLine && newLine) {
-        fileHtml.left += that.generateSingleLineHtml(isCombined, oldLine.type, oldLine.oldNumber, oldContent, oldPrefix);
-        fileHtml.right += that.generateSingleLineHtml(isCombined, newLine.type, newLine.newNumber, newContent, newPrefix);
+        if (lineFolding) {
+          fileHtml += that.generateWrappedSingleLineHtml({
+            isCombined: isCombined,
+            type: oldLine.type,
+            number: oldLine.oldNumber,
+            content: oldContent,
+            possiblePrefix: oldPrefix
+          }, {
+            isCombined: isCombined,
+            type: newLine.type,
+            number: newLine.newNumber,
+            content: newContent,
+            possiblePrefix: newPrefix
+          });
+        } else {
+          fileHtml.left += that.generateSingleLineHtml(isCombined, oldLine.type, oldLine.oldNumber, oldContent, oldPrefix);
+          fileHtml.right += that.generateSingleLineHtml(isCombined, newLine.type, newLine.newNumber, newContent, newPrefix);
+        }
       } else if (oldLine) {
-        fileHtml.left += that.generateSingleLineHtml(isCombined, oldLine.type, oldLine.oldNumber, oldContent, oldPrefix);
-        fileHtml.right += that.generateSingleLineHtml(isCombined, diffParser.LINE_TYPE.CONTEXT, '', '', '');
+        if (lineFolding) {
+          fileHtml += that.generateWrappedSingleLineHtml({
+            isCombined: isCombined,
+            type: oldLine.type,
+            number: oldLine.oldNumber,
+            content: oldContent,
+            possiblePrefix: oldPrefix
+          }, {
+            isCombined: isCombined,
+            type: diffParser.LINE_TYPE.CONTEXT,
+            number: '',
+            content: '',
+            possiblePrefix: ''
+          });
+        } else {
+          fileHtml.left += that.generateSingleLineHtml(isCombined, oldLine.type, oldLine.oldNumber, oldContent, oldPrefix);
+          fileHtml.right += that.generateSingleLineHtml(isCombined, diffParser.LINE_TYPE.CONTEXT, '', '', '');
+        }
       } else if (newLine) {
-        fileHtml.left += that.generateSingleLineHtml(isCombined, diffParser.LINE_TYPE.CONTEXT, '', '', '');
-        fileHtml.right += that.generateSingleLineHtml(isCombined, newLine.type, newLine.newNumber, newContent, newPrefix);
+        if (lineFolding) {
+          fileHtml += that.generateWrappedSingleLineHtml({
+            isCombined: isCombined,
+            type: diffParser.LINE_TYPE.CONTEXT,
+            number: '',
+            content: '',
+            possiblePrefix: ''
+          }, {
+            isCombined: isCombined,
+            type: newLine.type,
+            number: newLine.newNumber,
+            content: newContent,
+            possiblePrefix: newPrefix
+          });
+        } else {
+          fileHtml.left += that.generateSingleLineHtml(isCombined, diffParser.LINE_TYPE.CONTEXT, '', '', '');
+          fileHtml.right += that.generateSingleLineHtml(isCombined, newLine.type, newLine.newNumber, newContent, newPrefix);
+        }
       } else {
         console.error('How did it get here?');
       }
@@ -248,6 +381,34 @@
         content: lineWithoutPrefix,
         lineNumber: number
       });
+  };
+
+  SideBySidePrinter.prototype.generateWrappedSingleLineHtml = function(left, right) {
+    var that = this;
+
+    function generateWrappedTemplateObj(side) {
+      var lineWithoutPrefix = side.content;
+      var prefix = side.possiblePrefix;
+
+      if (!prefix) {
+        var lineWithPrefix = printerUtils.separatePrefix(side.isCombined, side.content);
+        prefix = lineWithPrefix.prefix;
+        lineWithoutPrefix = lineWithPrefix.line;
+      }
+      return {
+        type: side.type,
+        lineClass: 'd2h-wrapped-code-side-linenumber',
+        contentClass: 'd2h-wrapped-code-side-line',
+        prefix: prefix,
+        content: lineWithoutPrefix,
+        lineNumber: side.number
+      };
+    }
+
+    return hoganUtils.render(wrappedTemplatesPath, 'side-line', {
+      left: generateWrappedTemplateObj(left),
+      right: generateWrappedTemplateObj(right)
+    });
   };
 
   SideBySidePrinter.prototype.generateEmptyDiff = function() {
