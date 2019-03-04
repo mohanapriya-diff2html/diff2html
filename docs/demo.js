@@ -696,6 +696,7 @@ $(document).ready(function() {
     var matching = $matching.val();
     var wordsThreshold = $wordsThreshold.val();
     var matchingMaxComparisons = $matchingMaxComparisons.val();
+    var lineFolding = $lineFolding.is(':checked');
 
     fetch(req.url, {
       method: 'GET',
@@ -725,18 +726,21 @@ $(document).ready(function() {
           params['matching'] = matching;
           params['wordsThreshold'] = wordsThreshold;
           params['matchingMaxComparisons'] = matchingMaxComparisons;
+          params['lineFolding'] = lineFolding;
         } else {
           params['outputFormat'] = params['outputFormat'] || outputFormat;
           params['showFiles'] = String(params['showFiles']) !== 'false' || (params['showFiles'] === null && showFiles);
           params['matching'] = params['matching'] || matching;
           params['wordsThreshold'] = params['wordsThreshold'] || wordsThreshold;
           params['matchingMaxComparisons'] = params['matchingMaxComparisons'] || matchingMaxComparisons;
+          params['lineFolding'] = params['lineFolding'] || lineFolding;
 
           $outputFormat.val(params['outputFormat']);
           $showFiles.prop('checked', params['showFiles']);
           $matching.val(params['matching']);
           $wordsThreshold.val(params['wordsThreshold']);
           $matchingMaxComparisons.val(params['matchingMaxComparisons']);
+          $lineFolding.prop('checked', params['lineFolding']);
         }
 
         params['synchronisedScroll'] = params['synchronisedScroll'] || true;

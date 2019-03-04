@@ -6783,6 +6783,12 @@ process.umask = function() { return 0; };
       };
     }
 
+    return hoganUtils.render(wrappedTemplatesPath, 'side-line', {
+      left: generateWrappedTemplateObj(left),
+      right: generateWrappedTemplateObj(right)
+    });
+  };
+
   SideBySidePrinter.prototype.generateEmptyDiff = function() {
     var fileHtml = {};
     fileHtml.right = '';
