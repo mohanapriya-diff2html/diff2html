@@ -560,6 +560,7 @@ $(document).ready(function() {
   var $matching = $('#diff-url-options-matching');
   var $wordsThreshold = $('#diff-url-options-match-words-threshold');
   var $matchingMaxComparisons = $('#diff-url-options-matching-max-comparisons');
+  var $lineFolding = $('#diff-url-options-line-folding');
 
   if (window.location.search) {
     var url = getUrlFromSearch(window.location.search);
@@ -574,6 +575,7 @@ $(document).ready(function() {
     .add($matching)
     .add($wordsThreshold)
     .add($matchingMaxComparisons)
+    .add($lineFolding)
     .change(function(e) {
       console.log('');
       console.log(e);

@@ -116,6 +116,8 @@
   display: inline-block;
   white-space: nowrap;
   padding: 0 10px;
+  padding-left: 20px;
+  word-break: break-all;
 }
 
 .d2h-code-side-line {
@@ -128,6 +130,7 @@
   display: inline-block;
   white-space: nowrap;
   padding: 0 10px;
+  word-break: break-all;
 }
 
 .d2h-wrapped-code-line del,
@@ -153,6 +156,10 @@
   text-align: left;
 }
 
+.d2h-wrapped-code-line .d2h-code-line-prefix {
+    padding-right: 20px;
+    margin-left: -15px;
+}
 .d2h-code-line-prefix {
   display: inline;
   background: none;
@@ -175,7 +182,7 @@
   padding: 0;
   word-wrap: break-word;
   white-space: pre-wrap;
-  word-break: break-all;
+  line-height: 1.6;
 }
 
 .line-num1 {
