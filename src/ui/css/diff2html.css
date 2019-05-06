@@ -90,7 +90,6 @@
 }
 
 .d2h-file-diff {
-  overflow-x: scroll;
   overflow-y: hidden;
 }
 
@@ -115,7 +114,8 @@
 .d2h-code-line {
   display: inline-block;
   white-space: nowrap;
-  padding: 0 10px;
+  /* Compensate for the absolute positioning of the line numbers */
+  padding: 0 8em;
 }
 
 .d2h-wrapped-code-line {
@@ -129,7 +129,8 @@
 .d2h-code-side-line {
   display: inline-block;
   white-space: nowrap;
-  padding: 0 10px;
+  /* Compensate for the absolute positioning of the line numbers */
+  padding: 0 4.5em;
 }
 
 .d2h-wrapped-code-side-line {
@@ -194,32 +195,37 @@
 .line-num1 {
   box-sizing: border-box;
   float: left;
-  width: 40px;
+  width: 3.5em;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-left: 3px;
+  padding: 0 0.5em 0 0.5em;
 }
 
 .line-num2 {
   box-sizing: border-box;
   float: right;
-  width: 40px;
+  width: 3.5em;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-left: 3px;
+  padding: 0 0.5em 0 0.5em;
 }
 
 .d2h-code-linenumber {
   box-sizing: border-box;
-  width: 86px;
-  padding-left: 2px;
-  padding-right: 2px;
+  width: 7.5em;
+  /* Keep the numbers fixed on line contents scroll */
+  position: absolute;
+  display: inline-block;
   background-color: #fff;
   color: rgba(0, 0, 0, 0.3);
   text-align: right;
   border: solid #eeeeee;
   border-width: 0 1px 0 1px;
   cursor: pointer;
+}
+
+.d2h-code-linenumber:after {
+  content: '\200b';
 }
 
 .d2h-wrapped-code-linenumber {
@@ -237,11 +243,16 @@
   vertical-align: top;
 }
 
+.d2h-wrapped-code-linenumber:after {
+  content: '\200b';
+}
+
 .d2h-code-side-linenumber {
+  /* Keep the numbers fixed on line contents scroll */
+  position: absolute;
+  display: inline-block;
   box-sizing: border-box;
-  width: 56px;
-  padding-left: 5px;
-  padding-right: 5px;
+  width: 4em;
   background-color: #fff;
   color: rgba(0, 0, 0, 0.3);
   text-align: right;
@@ -250,6 +261,10 @@
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.d2h-code-side-linenumber:after {
+  content: '\200b';
 }
 
 .d2h-wrapped-code-side-linenumber {
@@ -269,6 +284,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: top;
+}
+
+.d2h-wrapped-code-side-linenumber:after {
+  content: '\200b';
 }
 
 .d2h-code-side-emptyplaceholder,
