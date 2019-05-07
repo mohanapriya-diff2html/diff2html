@@ -107,6 +107,10 @@
   margin-bottom: -8px;
 }
 
+.d2h-wrapped-file-side-diff .d2h-diff-table {
+    table-layout: fixed;
+}
+
 .d2h-code-line {
   display: inline-block;
   white-space: nowrap;
